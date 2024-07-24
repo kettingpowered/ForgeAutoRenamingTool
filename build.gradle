@@ -124,14 +124,15 @@ publishing {
     }
 
     repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/kettingpowered/ForgeAutoRenamingTool")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
+//https://github.com/orgs/community/discussions/23474
+//        maven {
+//            name = "GitHubPackages"
+//            url = uri("https://maven.pkg.github.com/kettingpowered/ForgeAutoRenamingTool")
+//            credentials {
+//                username = System.getenv("GITHUB_ACTOR")
+//                password = System.getenv("GITHUB_TOKEN")
+//            }
+//        }
         maven {
             name = 'kettingRepo'
             credentials {
