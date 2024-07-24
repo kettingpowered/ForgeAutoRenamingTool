@@ -1,23 +1,71 @@
-name: Publish
+name: Server builds
 
 on:
   push:
-    branches: [ "master" ]
-
-permissions:
-  contents: read
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
 
 jobs:
   build:
-    uses: MinecraftForge/SharedActions/.github/workflows/gradle.yml@main
-    with:
-      java: 17
-      gradle_tasks: "publish"
-      artifact_name: "ForgeAutoRenamingTool"
-    secrets:
-      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      PROMOTE_ARTIFACT_WEBHOOK: ${{ secrets.PROMOTE_ARTIFACT_WEBHOOK }}
-      PROMOTE_ARTIFACT_USERNAME: ${{ secrets.PROMOTE_ARTIFACT_USERNAME }}
-      PROMOTE_ARTIFACT_PASSWORD: ${{ secrets.PROMOTE_ARTIFACT_PASSWORD }}
-      MAVEN_USER: ${{ secrets.MAVEN_USER }}
-      MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Java 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      #      - name: Cache .gradle
+      #        uses: burrunan/gradle-cache-action@v1
+      #        with:
+      #          # Enable concurrent cache save and restore
+      #          # Default is concurrent=false for better log readability
+      #          concurrent: true
+      #          # Disable caching of $HOME/.gradle/caches/*.*/generated-gradle-jars
+      #          save-generated-gradle-jars: false
+      #          # Disable publishing Gradle Build Scan URL to job report #Don't
+      #          gradle-build-scan-report: true
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Build
+        run: ./gradlew build
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get Version Name
+        id: version_name
+        run: |
+          echo version=${GITHUB_REF#refs/tags/v} >> $GITHUB_OUTPUT
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@v2.9.0
+        with:
+          arguments: publish
+        env:
+          KETTINGUSERNAME: ${{ secrets.KETTINGUSERNAME }}
+          KETTINGPASSWORD: ${{ secrets.KETTINGPASSWORD }}
+          VERSION: ${{ steps.version_name.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

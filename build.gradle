@@ -9,8 +9,8 @@ plugins {
     id 'net.minecraftforge.gradleutils' version '[2.3,2.4)'
 }
 
-group = 'net.minecraftforge'
-version = gradleutils.getTagOffsetBranchVersion(null, 'master', 'HEAD')
+group = 'org.kettingpowered.patched.minecraftforge'
+version = System.getenv("VERSION")
 println "Version: $version"
 
 java {
@@ -92,9 +92,11 @@ tasks.named('compileJava', JavaCompile).configure {
     options.encoding = 'UTF-8'
 }
 
+/*
 changelog {
     from '0.1'
 }
+*/
 
 license {
     header = file('LICENSE-header.txt')
@@ -122,6 +124,21 @@ publishing {
     }
 
     repositories {
-        maven gradleutils.publishingForgeMaven
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/kettingpowered/ForgeAutoRenamingTool")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+        maven {
+            name = 'kettingRepo'
+            credentials {
+                username = System.getenv("KETTINGUSERNAME")
+                password = System.getenv("KETTINGPASSWORD")
+            }
+            url = "https://reposilite.c0d3m4513r.com/Ketting/"
+        }
     }
 }
